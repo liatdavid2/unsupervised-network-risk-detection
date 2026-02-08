@@ -31,7 +31,7 @@ pip install -r requirements.txt
 ```
 ---
 
-## Project Structure (Relevant Parts)
+## Project Structure
 
 ```
 unsupervised-network-risk-detection/
@@ -117,9 +117,6 @@ Run the model **as a Python module** from the project root:
 python -m src.models.train_anomaly_model ^
   --input data\processed\UNSW_Flow_features.parquet
 ```
-
-(Use `/` instead of `\` in Git Bash.)
-
 ---
 
 ### Expected Output
