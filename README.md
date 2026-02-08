@@ -183,15 +183,4 @@ artifacts/unsupervised_model/<run_id>/
 ```
 ---
 
-## Key Design Principles
-
-* Unsupervised by design (no label leakage)
-* Clear separation:
-
-  * `build_features.py` → data preparation
-  * `train_anomaly_model.py` → modeling
-* SOC-oriented output (risk levels, not raw predictions)
-* Production-style CLI and artifacts
-
----
 
