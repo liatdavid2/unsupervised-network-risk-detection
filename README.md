@@ -87,25 +87,14 @@ What this means:
 
 ---
 
+מעולה — הנה קטע **README מחובר, קצר, נקי ומקצועי**, בלי *Output Explained*, בדיוק לפי הבקשה שלך.
+אפשר להדביק אותו כמו־שהוא.
+
+---
+
 ## Step 2 – Train Unsupervised Anomaly Model
 
-### Important: Required CLI Argument
-
-If you run:
-
-```bat
-python src\models\train_unsupervised_model.py
-```
-
-You will get:
-
-```text
-error: the following arguments are required: --input
-```
-
-This is **expected behavior**.
-
-The training script **requires** an explicit input file path to avoid accidental training on the wrong data.
+This step trains an **unsupervised anomaly detection model** on pre-engineered network flow features.
 
 ---
 
@@ -115,14 +104,46 @@ Run the model **as a Python module** from the project root:
 
 ```bat
 python -m src.models.train_anomaly_model ^
-  --input data\processed\UNSW_Flow_features.parquet
+  --input data\processed\UNSW_Flow_features.parquet ^
+  --outdir artifacts\unsupervised_model ^
+  --run_tag with_time_port_freq ^
+  --contamination 0.01 ^
+  --low_q 0.95 ^
+  --high_q 0.99
 ```
+---
+### Parameter Explanation
+
+* `--input data\processed\UNSW_Flow_features.parquet`
+  Path to the processed feature file used for training.
+  This dataset already includes all feature engineering steps (time-based, port-based, and frequency features).
+  Labels may exist in the file but are **explicitly excluded** from training.
+
+* `--outdir artifacts\unsupervised_model`
+  Root directory where all artifacts from this training run are stored.
+  Each run creates a dedicated subdirectory for reproducibility and experiment tracking.
+
+* `--run_tag with_time_port_freq`
+  Human-readable identifier for the run.
+  Used to compare different feature sets, parameter choices, or modeling assumptions.
+
+* `--contamination 0.01`
+  Expected proportion of anomalies in the dataset (1%).
+  This is a modeling assumption used internally by the unsupervised algorithm, not ground truth.
+
+* `--low_q 0.95`
+  Lower quantile threshold for anomaly scores.
+  Flows below this threshold are considered **low risk**.
+
+* `--high_q 0.99`
+  Upper quantile threshold for anomaly scores.
+  Flows above this threshold are considered **high risk**; values in between are treated as **medium risk**.
 ---
 
 ### Expected Output
 
 ```text
-[0/6] Run directory ........ artifacts\unsupervised_model\20260208_105203
+[0/6] Run directory ........ artifacts\unsupervised_model\with_time_port_freq
 [1/6] Loaded data .......... (2059415, 39)
 [2/6] Training features .... 37
 [3/6] Training model ......
@@ -130,57 +151,44 @@ python -m src.models.train_anomaly_model ^
 [5/6] Done
 [NOTE] AUC vs binary_label .... 0.9620 (sanity check only)
 ```
+
 ---
 
 ## What Happened in Training
 
-### Data Loading
+### Data & Feature Safety
 
-* ~2.06 million network flows loaded
+* ~2.06M network flows were loaded
 * 39 columns total:
 
   * 37 numeric features
   * 2 label columns (`attack_label`, `binary_label`)
-
-### Feature Safety
-
-* Label columns were **explicitly removed from training features**
+* Label columns were **explicitly excluded** from training
 * Training is **strictly unsupervised**
 * Non-numeric columns are rejected by design
 
-### Model Training
-
-* An Isolation Forest model was trained on behavioral features only
-* No attack labels were used
 
 ### Risk Scoring
 
-* Each flow received an `anomaly_score`
-* Scores were converted into:
+* Each flow receives an `anomaly_score`
+* Scores are mapped to risk tiers:
 
-  * LOW
-  * MEDIUM
-  * HIGH risk tiers (quantile-based)
-
-### Sanity Check (Post-hoc Only)
-
-* `binary_label` was used **after training only**
-* AUC ≈ **0.96** confirms that anomalous scores correlate strongly with known attacks
-* This does **not** influence training or thresholds
-
+  * **LOW**
+  * **MEDIUM**
+  * **HIGH**
+    using quantile-based thresholds (`low_q`, `high_q`)
 ---
 
 ## Generated Artifacts
 
-Each run creates a timestamped directory:
+Each run creates a dedicated directory:
 
-```
+```text
 artifacts/unsupervised_model/<run_id>/
-├── pipeline.joblib        # Preprocessing + model
+├── pipeline.joblib        # Preprocessing + anomaly model
 ├── feature_names.json     # Features used for training
-├── train_report.json      # Metrics and thresholds
+├── train_report.json      # Metrics, thresholds, run config
 └── train_scored.parquet   # Input data + anomaly_score + risk_level
 ```
----
 
 
