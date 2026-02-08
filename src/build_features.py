@@ -10,20 +10,22 @@ from sklearn.feature_selection import VarianceThreshold
 RAW_DATA_PATH = Path("data/raw/UNSW_Flow.parquet")
 OUTPUT_DATA_PATH = Path("data/processed/UNSW_Flow_features.parquet")
 
-TARGET_COL = "binary_label"
-
 
 # =========================
-# Columns to exclude
+# Columns to exclude from X
 # =========================
-NON_FEATURE_COLS = [
+
+LABEL_COLS = [
+    "attack_label",
+    "binary_label",
+]
+
+CATEGORICAL_COLS = [
     "source_ip",
     "destination_ip",
     "protocol",
     "state",
     "service",
-    "attack_label",
-    "binary_label",
 ]
 
 IDENTIFIER_COLS = [
@@ -47,9 +49,9 @@ def log(step: str, message: str):
 # =========================
 # Preprocessing helpers
 # =========================
-def drop_identifier_columns(df: pd.DataFrame) -> pd.DataFrame:
-    cols_to_drop = [c for c in IDENTIFIER_COLS if c in df.columns]
-    return df.drop(columns=cols_to_drop, errors="ignore")
+
+def drop_columns_if_exist(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    return df.drop(columns=[c for c in cols if c in df.columns], errors="ignore")
 
 
 def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
@@ -85,56 +87,48 @@ def correlation_filter(df: pd.DataFrame, threshold: float = 0.95):
 # =========================
 # Main pipeline
 # =========================
+
 def build_features():
-    # [1/6] Load data
+    # [1/5] Load data
     df = pd.read_parquet(RAW_DATA_PATH)
-    log("1/6", f"Load data ............... OK ({len(df):,} rows)")
+    log("1/5", f"Load data ............... OK ({len(df):,} rows)")
 
-    # [2/6] Target validation
-    if TARGET_COL not in df.columns:
-        raise ValueError(f"Target column '{TARGET_COL}' not found")
+    # Keep labels aside (NOT used for feature selection)
+    labels = df[LABEL_COLS].copy() if all(c in df.columns for c in LABEL_COLS) else None
 
-    y = df[TARGET_COL]
-    attack_rate = y.value_counts(normalize=True).get(1, 0) * 100
-    log("2/6", f"Target detected ......... {TARGET_COL} ({attack_rate:.2f}% attacks)")
+    # [2/5] Drop non-feature columns
+    X = df.copy()
+    X = drop_columns_if_exist(X, LABEL_COLS)
+    X = drop_columns_if_exist(X, CATEGORICAL_COLS)
+    X = drop_columns_if_exist(X, IDENTIFIER_COLS)
 
-    # [3/6] Drop non-numeric / identifiers
-    non_numeric_cols = df.select_dtypes(include=["object", "string"]).columns.tolist()
-
-    X = df.drop(
-        columns=[c for c in NON_FEATURE_COLS if c in df.columns],
-        errors="ignore"
-    )
-    X = drop_identifier_columns(X)
+    # Keep numeric only
     X = X.select_dtypes(include=[np.number])
+    log("2/5", f"Numeric features ........ {X.shape[1]}")
 
-    log("3/6", f"Drop non-numeric ........ {len(non_numeric_cols)} columns removed")
-
-    # [4/6] Numeric features + missing values
-    before_features = X.shape[1]
+    # [3/5] Handle missing values
     X = handle_missing_values(X)
-    log("4/6", f"Numeric features ........ {before_features}")
+    log("3/5", "Missing values handled")
 
-    # [5/6] Feature selection
+    # [4/5] Feature selection
+    before = X.shape[1]
+
     X, _ = variance_filter(X, threshold=0.0)
     after_variance = X.shape[1]
 
     X, _ = correlation_filter(X, threshold=0.95)
     after_corr = X.shape[1]
 
-    log("5/6", f"Feature selection ....... {after_variance} → {after_corr}")
+    log("4/5", f"Feature selection ....... {before} → {after_variance} → {after_corr}")
 
-    # [6/6] Save output
-    X[TARGET_COL] = y.values
+    # [5/5] Save output (features + labels for evaluation only)
     OUTPUT_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    if labels is not None:
+        X = pd.concat([X, labels], axis=1)
+
     X.to_parquet(OUTPUT_DATA_PATH, index=False)
-
-    log("6/6", f"Save features ........... {OUTPUT_DATA_PATH}")
-
-    # Short summary
-    print("\nClass distribution:")
-    print(f"  normal : {(1 - attack_rate/100)*100:.2f}%")
-    print(f"  attack : {attack_rate:.2f}%")
+    log("5/5", f"Save features ........... {OUTPUT_DATA_PATH}")
 
     return list(X.columns)
 
