@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "expected_risk": "LOW",
+    "note": "All features populated according to feature_names.json (non-label). Values represent a natural benign UDP/DNS flow."
+  },
+
+  "flow_index": 81234,
+  "dur": 0.0012,
+  "proto": "udp",
+  "service": "dns",
+  "state": "CON",
+  "sbytes": 132,
+  "dbytes": 164,
+  "ct_srv_dst": 3,
+  "ct_dst_sport_ltm": 1,
+  "ct_src_ltm": 2
+}

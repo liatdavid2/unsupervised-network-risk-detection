@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "expected_risk": "HIGH",
+    "rationale": [
+      "Connection duration is unusually long",
+      "Outbound data volume is extremely high",
+      "High fan-out to destination ports",
+      "Repeated connections to the same destination service"
+    ],
+    "use_case": "Data exfiltration or aggressive scanning pattern"
+  },
+
+  "dur": 18.7,
+  "sbytes": 2850000,
+  "dbytes": 1400,
+  "spkts": 160,
+  "dpkts": 110,
+
+  "source_port": 44321,
+  "destination_port": 80,
+
+  "sttl": 64,
+  "dttl": 64,
+
+  "sload": 155000.0,
+  "dload": 8200.0,
+
+  "swin": 1024,
+  "stcpb": 431245678,
+  "dtcpb": 298734512,
+
+  "smeansz": 180,
+  "dmeansz": 12,
+
+  "trans_depth": 2,
+  "res_bdy_len": 0,
+
+  "sjit": 0.45,
+  "djit": 0.32,
+
+  "stime": 1622548800,
+  "sintpkt": 0.08,
+  "dintpkt": 0.12,
+
+  "tcprtt": 0.18,
+  "synack": 0.06,
+  "ackdat": 0.12,
+
+  "is_sm_ips_ports": 0,
+
+  "ct_state_ttl": 5,
+  "ct_flw_http_mthd": 12,
+  "is_ftp_login": 0,
+  "ct_ftp_cmd": 0,
+
+  "ct_srv_src": 140,
+  "ct_dst_src_ltm": 165,
+
+  "ct_dst_sport_ltm": 95,
+  "ct_srv_dst": 180,
+  "ct_src_ltm": 70,
+  "ct_dst_ltm": 65,
+  "ct_src_dport_ltm": 55,
+
+  "proto": "tcp",
+  "service": "http",
+  "state": "CON"
+}

@@ -1,0 +1,18 @@
+# Large datasets / raw data
+data/raw/
+data/processed/
+*.parquet
+*.csv
+
+# Local artifacts
+artifacts/
+checkpoints/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
