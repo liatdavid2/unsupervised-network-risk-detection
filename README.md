@@ -11,8 +11,8 @@ The pipeline is split into two clear stages:
 
 Clone the repository and enter the project directory:
 ```bash
-git clone https://github.com/liatdavid2/network-intrusion-detection-ml.git
-cd network-intrusion-detection-ml
+git clone https://github.com/liatdavid2/unsupervised-network-risk-detection.git
+cd unsupervised-network-risk-detection
 ````
 
 Create and activate a virtual environment:
