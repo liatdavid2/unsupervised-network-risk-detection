@@ -1,0 +1,49 @@
+version: 1
+
+description: >
+  SOC decision policy for unsupervised network risk detection.
+  Converts anomaly scores and risk tiers into operational actions.
+
+risk_tiers:
+  LOW:
+    min_score: null
+    max_score: q_low
+    action: monitor
+    severity: informational
+    sla_minutes: null
+
+  MEDIUM:
+    min_score: q_low
+    max_score: q_high
+    action: alert
+    severity: medium
+    sla_minutes: 240
+
+  HIGH:
+    min_score: q_high
+    max_score: null
+    action: create_incident
+    severity: high
+    sla_minutes: 30
+
+actions:
+  monitor:
+    description: >
+      Logged for trend analysis. No immediate SOC action required.
+
+  alert:
+    description: >
+      SOC analyst review required. Create alert in SIEM.
+
+  create_incident:
+    description: >
+      Immediate response required. Open incident ticket and escalate.
+
+overrides:
+  high_confidence_ports:
+    ports: [22, 3389, 445]
+    action: create_incident
+
+  known_benign_services:
+    services: ["dns", "ntp"]
+    downgrade_to: monitor
